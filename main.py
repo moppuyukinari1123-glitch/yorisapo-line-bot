@@ -206,11 +206,14 @@ async def api_create_reservation(body: ReservationIn):
         "status": "confirmed",
         "gcal_event_id": gcal_event_id  # GCalのIDを保存
     }
-    ins = supabase.table("reservations").insert(new_res).execute()
     
+    # ★ 先に顧客データを名簿に登録する ★
     cust_check = supabase.table("customers").select("line_user_id").eq("line_user_id", body.user_id).execute()
     if not cust_check.data:
         supabase.table("customers").insert({"line_user_id": body.user_id, "name": body.customer_name}).execute()
+
+    # ★ そのあとに予約データを保存する ★
+    ins = supabase.table("reservations").insert(new_res).execute()
 
     data = ins.data[0]
     rid_short = short_res_id(data['id'])
